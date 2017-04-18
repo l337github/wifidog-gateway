@@ -62,7 +62,7 @@
 void
 http_callback_404(httpd * webserver, request * r, int error_code)
 {
-    char tmp_url[MAX_BUF], *url, *mac;
+    char tmp_url[MAX_BUF], *url, *mac,*rssi, *ch;//add rssi ch
     s_config *config = config_get_config();
     t_auth_serv *auth_server = get_auth_server();
 
@@ -114,11 +114,21 @@ http_callback_404(httpd * webserver, request * r, int error_code)
                           auth_server->authserv_login_script_path_fragment, config->gw_address, config->gw_port,
                           config->gw_id, r->clientAddr, url);
         } else {
-            debug(LOG_INFO, "Got client MAC address for ip %s: %s", r->clientAddr, mac);
-            safe_asprintf(&urlFragment, "%sgw_address=%s&gw_port=%d&gw_id=%s&ip=%s&mac=%s&url=%s",
-                          auth_server->authserv_login_script_path_fragment,
-                          config->gw_address, config->gw_port, config->gw_id, r->clientAddr, mac, url);
-            free(mac);
+		    debug(LOG_INFO, "Got client MAC address for ip %s: %s", r->clientAddr, mac);
+            if(!(rssi = rssi_get(mac))){
+                debug(LOG_INFO, "Failed to retrieve RSSI  for MAC %s, so not putting in the login request",mac);
+                safe_asprintf(&urlFragment, "%sgw_address=%s&gw_port=%d&gw_id=%s&ip=%s&mac=%s&url=%s",
+                auth_server->authserv_login_script_path_fragment,
+                config->gw_address, config->gw_port, config->gw_id, r->clientAddr, mac, url);
+                free(mac);
+            }else{
+                ch =channel_get();
+                debug(LOG_INFO, "Got client RSSI  for MAC %s: %s",mac,rssi);
+                safe_asprintf(&urlFragment, "%sgw_address=%s&gw_port=%d&gw_id=%s&ip=%s&mac=%s&url=%s&rssi=%s&ch=%s",auth_server->authserv_login_script_path_fragment,
+                config->gw_address, config->gw_port, config->gw_id, r->clientAddr, mac, url,rssi,ch);
+                free(rssi);
+            }
+
         }
 
         // if host is not in whitelist, maybe not in conf or domain'IP changed, it will go to here.

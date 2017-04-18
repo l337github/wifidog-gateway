@@ -73,4 +73,10 @@ void fw_sync_with_authserver(void);
 /** @brief Get an IP's MAC address from the ARP cache.*/
 char *arp_get(const char *);
 
+/** @brief Get an MAC's RSSI  from the arp_get function.*/
+char *rssi_get(const char *);
+
+/** @brief Get an AP's CH .*/
+char *channel_get(void);
+
 #endif                          /* _FIREWALL_H_ */

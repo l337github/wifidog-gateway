@@ -186,6 +186,55 @@ arp_get(const char *req_ip)
 
     return reply;
 }
+/**
+get client rssi value
+*/
+char *
+rssi_get(const char *mac)
+{
+    FILE *proc;
+    char *reply;
+    char buffer[20];
+    char buffer2[20];
+
+    if (!(proc = popen("iw dev wlan0 station dump|awk '/Station/||/signal:/{ print $2 }'", "r"))) {
+        return NULL;
+    }
+
+    /* Find ip, copy mac in reply */
+    reply = NULL;
+    while (!feof(proc)&&fscanf(proc,"%s %s",buffer,buffer2)==2){
+        if (strcmp(mac, buffer) == 0) {
+            reply = safe_strdup(buffer2);
+            //printf("%s\n",reply);
+            break;
+        }
+    }
+    fclose(proc);
+    return reply;
+}
+/**
+ get ap's working channel
+*/
+char *
+channel_get(void)
+{
+    FILE *proc;
+    char *reply;
+    char buffer[8];
+
+
+    if (!(proc = popen("iw wlan0 info|awk '/channel/{ print $2 }'", "r"))) {
+        return NULL;
+    }
+
+    /* Find ch, copy ch in reply */
+    reply = NULL;
+    fscanf(proc,"%s",buffer);     
+    reply = safe_strdup(buffer);  
+    fclose(proc);
+    return reply;
+}
 
 /** Initialize the firewall rules
  */
